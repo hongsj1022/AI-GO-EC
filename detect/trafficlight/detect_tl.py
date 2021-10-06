@@ -1,18 +1,39 @@
+import os
+import cv2
 import sys
 import time
-from pathlib import Path
-
-import cv2
 import torch
+from pathlib import Path
 import torch.backends.cudnn as cudnn
+from collections import deque
+from trafficlight.models.experimental import attempt_load
+from trafficlight.utils.datasets import LoadStreams, LoadImages
+from trafficlight.utils.general import check_img_size, check_requirements, check_imshow, non_max_suppression, \
+    apply_classifier, scale_coords, set_logging
+from trafficlight.utils.plots import plot_one_box
+from trafficlight.utils.torch_utils import select_device, load_classifier, time_sync
+
+
 FILE = Path(__file__).absolute()
 sys.path.append(FILE.parents[0].as_posix())
-from collections import deque
-from models.experimental import attempt_load
-from utils.datasets import LoadStreams, LoadImages
-from utils.general import check_img_size, check_requirements, check_imshow, non_max_suppression, \
-    apply_classifier, scale_coords, set_logging
-from utils.torch_utils import select_device, load_classifier, time_sync
+
+import paho.mqtt.publish as publish
+
+## Convert ( top left x, top left y, bottom right x , bottom right y ) to ( center of x, center of y, width, height )
+def convert_to_yolo_style(w,h,xmin,xmax,ymin,ymax):
+    dw = 1./w
+    dh = 1./h
+
+    x = (xmax+xmin)/2.0
+    y = (ymax+ymin)/2.0
+    w = xmax-xmin
+    h = ymax-ymin
+
+    x = x*dw
+    w = w*dw
+    h = h*dh
+    y = y*dh
+    return x,y,w,h
 
 
 def plot_one_box(x, im, color=(128, 128, 128), label=None, line_thickness=3):
@@ -55,6 +76,11 @@ def aigo_detect_test(weights='/home/aigo/detect/trafficlight/test4best.pt',  # m
     set_logging()
     device = select_device(device)
     half &= device.type != 'cpu'  # half precision only supported on CUDA
+
+    # Set Path
+    img_dir = '/home/aigo/toCore/trafficlight/images/'
+    label_dir = '/home/aigo/toCore/trafficlight/labels/'
+    dir_len = len(os.listdir(img_dir))-1
 
     # Load model
     w = weights[0] if isinstance(weights, list) else weights
@@ -141,6 +167,20 @@ def aigo_detect_test(weights='/home/aigo/detect/trafficlight/test4best.pt',  # m
                             color = (0, 0, 255)
                         else:
                             color = (23, 154, 0)
+                        
+                        # save for train
+                        if len(os.listdir(img_dir)) >= 1000:
+                            pass
+                        else:
+                            dir_len += 1
+                            keyword = "tl" +str(dir_len)
+                            cv2.imwrite(img_dir + keyword + ".jpg", im0)
+                            
+                            x, y, w, h = convert_to_yolo_style(im0.shape[1], im0.shape[0], float(xyxy[0]), float(xyxy[2]), float(xyxy[1]), float(xyxy[3]))
+                            f = open(label_dir + keyword + ".txt", 'w')
+                            f.write(f'{c} {x} {y} {w} {h}')
+                            f.close()
+                        
                         label = None if hide_labels else (names[c] if hide_conf else f'{names[c]}')
                         plot_one_box(xyxy, im0, label=label, color=color, line_thickness=line_thickness)
                         print("Result: "+names[c])
@@ -184,6 +224,7 @@ def tl_run():
             elif(curr_state==1): # green ( -> red)
                 try:
                     res = aigo_detect_test(source='/home/aigo/detect/image.jpg')
+                    print(res)
                 except Exception as e:
                     print(e)
                 if(len(buff)<20):
