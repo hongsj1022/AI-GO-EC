@@ -69,7 +69,7 @@ def threaded(client_socket, addr):
     #return imque
 
 HOST = '127.0.0.1'
-PORT = 9999
+PORT = 9998
 
 server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM) # 주소 체계(address family)로 IPv4, 소켓 타입으로 TCP 사용합니다. 
 
@@ -93,11 +93,9 @@ socketList = [server_socket]
 # 새로운 쓰레드에서 해당 소켓을 사용하여 통신을 하게 됩니다
 while True: 
 
-    print('wait')
-
     try:
         read_socket, write_socket, error_socket = select(socketList, [], [], 1)
-    
+        print(read_socket) 
         for sock in read_socket:
             if sock == server_socket:
                 client_socket, addr = server_socket.accept()

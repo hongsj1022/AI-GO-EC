@@ -2,6 +2,7 @@ import os
 import shutil
 import paramiko
 from scp import SCPClient, SCPException
+import requests
 
 class SSHManager:
     """ usage:
@@ -44,8 +45,10 @@ class SSHManager:
             with SCPClient(self.ssh_client.get_transport()) as scp:
                 scp.get(remote_path, local_path)
 
-        except SCPException:
-            raise SCPException.message
+        except:
+            pass
+        #SCPException:
+        #    raise SCPException.message
 
     def send_command(self, command):
         """Send a single command"""
@@ -57,81 +60,70 @@ if __name__ == '__main__':
     remote_server = "10.246.246.72"
     remote_id = "icns"
     remote_pw = "ilove_aigo331"
+    toCore = "/home/aigo/toCore/"
 
     #Create SCP Client
     ssh_manager = SSHManager()
     ssh_manager.create_ssh_client(remote_server, remote_id, remote_pw)
-
     while True:
-        # If more than 1000 images are saved in /home/aigo/toCore/car
-        if len(os.listdir('/home/aigo/toCore/car') == 1000:
-        
-            remote_path = "/home2/icns/aigo/car_train"
-            remote_file = remote_path + "/car.zip"
-            #Archive folder to zipfile
-            local_folder = '/home/aigo/toCore/car'
-            local_file = shutil.make_archive(local_folder, 'zip', local_folder)
-               
-            #Send zipfile
-            ssh_manager.send_file(local_file, remote_path)
-            ssh_manager.get_file(remote_file, local_file)
-    
-            #Remove all images in dir
-            os.system("rm /home/aigo/toCore/car/*")
+        # If 1000 images and labels are saved in /home/aigo/toCore/car
+        if len(os.listdir(toCore + "car/images")) == 1000:
+            if len(os.listdir(toCore + "car/labels")) == 1000:
+                
+                remote_path_image = "/home2/icns/aigo/car_train/images"
+                remote_path_label = "/home2/icns/aigo/car_train/labels"
+                remote_file_image = remote_path_image + "/images.zip"
+                remote_file_label = remote_path_label + "/labels.zip"
 
-            requests.get("http://10.246.246.72:10222/car_training")
-    
-        # If more than 1000 images are saved in /home/aigo/toCore/car_dist
-        if len(os.listdir('/home/aigo/toCore/car_dist')) >= 1000:
-    
-            remote_path = "/home2/icns/aigo/car_dist_train"
-            remote_file = remote_path + "/car_dist.zip"
-            #Archive folder to zipfile
-            local_folder = '/home/aigo/toCore/car_dist'
-            local_file = shutil.make_archive(local_folder, 'zip', local_folder)
-               
-            #Send zipfile
-            ssh_manager.send_file(local_file, remote_path)
-            ssh_manager.get_file(remote_file, local_file)
+                #Archive folder to zipfile
+                local_folder_image = toCore + 'car/images'
+                local_folder_label = toCore + 'car/labels'
 
-            #Remove all images in dir
-            os.system("rm /home/aigo/toCore/car_dist/*")
+                local_file_image = shutil.make_archive(local_folder_image, 'zip', local_folder_image)
+                local_file_label = shutil.make_archive(local_folder_label, 'zip', local_folder_label)
 
-            requests.get("http://10.246.246.72:10222/car_dist_training")
+                #Send zipfile
+                ssh_manager.send_file(local_file_image, remote_path_image)
+                ssh_manager.send_file(local_file_label, remote_path_label)
+                ssh_manager.get_file(remote_file_image, local_file_image)
+                ssh_manager.get_file(remote_file_label, local_file_label)
+                
+                #Remove all images in dir
+                os.system("rm /home/aigo/toCore/car/images/*")
+                os.system("rm /home/aigo/toCore/car/labels/*")
+                
+                requests.get("http://10.246.246.72:10222/car_training")
 
-        # If more than 1000 images are saved in /home/aigo/toCore/crosswalk
-        if len(os.listdir('/home/aigo/toCore/car')) >= 1000:
+                break
 
-            remote_path = "/home2/icns/aigo/cw_train"
-            remote_file = remote_path + "/crosswalk.zip"
-            #Archive folder to zipfile
-            local_folder = '/home/aigo/toCore/crosswalk'
-            local_file = shutil.make_archive(local_folder, 'zip', local_folder)
 
-            #Send zipfile
-            ssh_manager.send_file(local_file, remote_path)
-            ssh_manager.get_file(remote_file, local_file)
+        # If 1000 images and labels are saved in /home/aigo/toCore/trafficlight
+        print(len(os.listdir(toCore + "trafficlight/images")), len(os.listdir(toCore + "trafficlight/labels")))
+        if len(os.listdir(toCore + "trafficlight/images")) == 1000:
+            if len(os.listdir(toCore + "trafficlight/labels")) == 1000:
 
-            #Remove all images in dir
-            os.system("rm /home/aigo/toCore/crosswalk/*")
+                remote_path_image = "/home2/icns/aigo/tl_train/images"
+                remote_path_label = "/home2/icns/aigo/tl_train/labels"
+                remote_file_image = remote_path_image + ".zip"
+                remote_file_label = remote_path_label + ".zip"
 
-            requests.get("http://10.246.246.72:10222/cw_training")
+                #Archive folder to zipfile
+                local_folder_image = toCore + "trafficlight/images"
+                local_folder_label = toCore + 'trafficlight/labels'
 
-        # If more than 1000 images are saved in /home/aigo/toCore/trafficlight
-        if len(os.listdir('/home/aigo/toCore/trafficlight')) >= 1000:
+                local_file_image = shutil.make_archive(local_folder_image, 'zip', local_folder_image)
+                local_file_label = shutil.make_archive(local_folder_label, 'zip', local_folder_label)
 
-            remote_path = "/home2/icns/aigo/tl_train"
-            remote_file = remote_path + "/trafficlight.zip"
-            #Archive folder to zipfile
-            local_folder = '/home/aigo/toCore/trafficlight'
-            local_file = shutil.make_archive(local_folder, 'zip', local_folder)
-    
-            #Send zipfile
-            ssh_manager.send_file(local_file, remote_path)
-            ssh_manager.get_file(remote_file, local_file)
-    
-            #Remove all images in dir
-            os.system("rm /home/aigo/toCore/trafficlight/*")
+                #Send zipfile
+                ssh_manager.send_file(local_file_image, remote_path_image)
+                ssh_manager.send_file(local_file_label, remote_path_label)
+                ssh_manager.get_file(remote_file_image, local_file_image)
+                ssh_manager.get_file(remote_file_label, local_file_label)
 
-            requests.get("http://10.246.246.72:10222/tl_training")
+                #Remove all images in dir
+                os.system("rm /home/aigo/toCore/trafficlight/images/*")
+                os.system("rm /home/aigo/toCore/trafficlight/labels/*")
 
+                requests.get("http://10.246.246.72:10222/tl_training")
+
+                break

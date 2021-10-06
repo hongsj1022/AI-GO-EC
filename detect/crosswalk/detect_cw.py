@@ -49,6 +49,7 @@ def aigo_detect_test(weights='/home/aigo/detect/crosswalk/cr_best.pt',  # model.
         ):
     webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
         ('rtsp://', 'rtmp://', 'http://', 'https://'))
+    print("webcam", webcam)
 
     res = 0
     # Initialize
@@ -160,10 +161,11 @@ def cw_run():
     LIM=4
     while(True):
         try:
-            res = aigo_detect_test(source='/home/aigo/detect/image.jpg')
+            result = aigo_detect_test(source="/home/aigo/image.jpg")
+            print(result)
         except Exception as e:
             print(e)
-        buff.append(res+1)
+        buff.append(result+1)
         if(sum(buff)>LIM):
             return 1
         elif(len(buff)>LIM):
