@@ -68,6 +68,7 @@ if __name__ == '__main__':
     # tl_res == 1 : Go
     # tl_res == -1 : No Traffic Light -> Detect Car
 
+    target_pt = 123.45
 
     while True:
 
@@ -79,14 +80,12 @@ if __name__ == '__main__':
             '''
             1) Crosswalk detection and return the center point of detected crosswalk
             while True:
-                if detected:
+                cw_res, = cw_run()
+                if cw_res - target_pt <= 10:
+                    publish.single(topic="/detect/cw", payload=angle, hostname=MQTT_HOST)
                     break
-
-            2) Convert the point to angle
-            angle = xxx
-
-            3) Publish the converted angle
-            publish.single(topic="/detect/cw", payload=angle, hostname=MQTT_HOST)
+                else:
+                    pass
             '''
             while (client.loop()==0):
                 if(cw==1):
