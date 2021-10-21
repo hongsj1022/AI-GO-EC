@@ -8,11 +8,17 @@ import json
 from crosswalk.detect_cw import cw_run
 import paho.mqtt.publish as publish
 from collections import deque
+import paho.mqtt.client as mqtt
 
 def on_message(client, userdata, msg):
-    global cw
+    global cw, notl, tts
     if (msg.topic == "/detect/cw"):
         cw = int(msg.payload.decode('utf-8'))
+    if (msg.topic == "/nodetect/tl"):
+        notl = int(msg.payload.decode('utf-8'))
+    if (msg.topic == "/endinform/tts"):
+        tts = int(msg.payload.decode('utf-8'))
+
     print(msg.topic+" " +str(msg.payload))
 
 
@@ -37,15 +43,16 @@ if __name__ == '__main__':
     socket_capture_r = BufferlessSocketCapture(9999)
 
     isSafe = 0
-    print('good')
+    print('All sockets have opened!')
 
-    global cw
-    cw = 0
+    global cw, notl, tts
+    cw = notl = tts = 0
     client = mqtt.Client()
     client.on_message = on_message
 
     client.connect("163.180.117.43")
     client.subscribe("/detect/cw",0)
+    client.subscribe("/endinform/tts",0)
     
     # If AI-GO arrived in front of crosswalk
     while (client.loop()==0):
@@ -63,29 +70,64 @@ if __name__ == '__main__':
 
 
     while True:
-        
-        if socket_capture_c.isConnected() == True:
-            print("connected")
-            tl_res = tl_run()
-            if tl_res == 1: # If Trafficlight detected
-                publish.single(topic="/detect/tl", payload="1", hostname=MQTT_HOST)
-                break
-            elif tl_res == -1:  # If Trafficlight not detected
-                # Car detection
-                while True:
-                    if socket_capture_l.isConnected() == True:
-                        ret, img = socket_capture_l.read()
-                        detections, distances = me.run(img)
-                        min_distance = 100
-                        for distance in distances:
-                            if distance < min_distance:
-                                min_distance = distance            
-                        if min_distance < 10:
-                            isSafe += 1
-                        else:
-                            isSafe = 0
-                    if isSafe > 20:
-                        publish.single(topic="/detect/car", payload="1", hostname=MQTT_HOST)
-                        break
-            else:
-                pass
+
+        if socket_capture_r.isConnected() == True:
+            print("Connected to Right Camera")
+            print("Start crosswalk detection")
+
+            #Crosswalk detection
+            '''
+            1) Crosswalk detection and return the center point of detected crosswalk
+            while True:
+                if detected:
+                    break
+
+            2) Convert the point to angle
+            angle = xxx
+
+            3) Publish the converted angle
+            publish.single(topic="/detect/cw", payload=angle, hostname=MQTT_HOST)
+            '''
+            while (client.loop()==0):
+                if(cw==1):
+                    cw = 0
+                    break
+            
+            if socket_capture_c.isConnected() == True:
+                print("Connected to Center Camera")
+                print("Start trafficlight detection")
+                
+                #Trafficlight detection
+                tl_res = tl_run()
+                if tl_res == 1: # If Trafficlight detected
+                    publish.single(topic="/detect/tl", payload="1", hostname=MQTT_HOST)
+                    break
+
+                elif tl_res == -1:  # If Trafficlight not detected
+                    publish.single(topic="/nodetect/tl", payload="1", hostname=MQTT_HOST)
+                    print("Trafficlight not detected, Waiting for end of TTS")
+                    while (client.loop()==0):
+                        if(tts==1):
+                            tts = 0
+                            break
+                   
+                    # Car detection
+                    while True:
+                        if socket_capture_l.isConnected() == True:
+                            print("Connected to Left Camera")
+                            print("Start Car detection")
+                            ret, img = socket_capture_l.read()
+                            detections, distances = me.run(img)
+                            min_distance = 100
+                            for distance in distances:
+                                if distance != 0 and distance < min_distance:
+                                    min_distance = distance            
+                            if min_distance > 5:
+                                isSafe += 1
+                            else:
+                                isSafe = 0
+                        if isSafe > 20:
+                            publish.single(topic="/detect/car", payload="1", hostname=MQTT_HOST)
+                            break
+                else:
+                    pass
