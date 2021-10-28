@@ -190,9 +190,9 @@ def aigo_detect_test(weights='/home/aigo/detect/trafficlight/test4best.pt',  # m
             #print(f'{s}Done1. ({t2 - t1:.3f}s)')
 
             # Stream results
-            #if(view_img):
-            #    cv2.imshow('test', im0)
-            #    cv2.waitKey(1)  # 1 millisecond
+            if(view_img):
+                cv2.imshow('test', im0)
+                cv2.waitKey(1)  # 1 millisecond
 
     print(f'Finish: {time.time() - t0:.3f}s')
     return res
