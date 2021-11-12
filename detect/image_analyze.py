@@ -100,6 +100,8 @@ if __name__ == '__main__':
             
             #Trafficlight detection
             tl_res = tl_run()
+            #time.sleep(3)
+            #tl_res = -1
             if tl_res == 1: # If Trafficlight detected
                 publish.single(topic="/detect/tl", payload="1", hostname=MQTT_HOST)
                 break
@@ -115,7 +117,7 @@ if __name__ == '__main__':
                 # Car detection
                 print("Start Car detection")
                 while True:
-                    if isSafe > 1000:
+                    if isSafe > 20:
                         publish.single(topic="/detect/nocar", payload="1", hostname=MQTT_HOST)
                         isSafe =0
                         break
@@ -134,7 +136,7 @@ if __name__ == '__main__':
                                     #print(f'distance is {distance}')
                                     min_distance = distance
                             print(f'Closest car is in {min_distance}')
-                            if min_distance > 35:
+                            if min_distance > 20:
                                 print("Car is faraway")
                                 isSafe += 1
                             else:

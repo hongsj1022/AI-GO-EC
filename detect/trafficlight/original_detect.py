@@ -12,7 +12,7 @@ from trafficlight.utils.general import check_img_size, check_requirements, check
     apply_classifier, scale_coords, set_logging
 from trafficlight.utils.plots import plot_one_box
 from trafficlight.utils.torch_utils import select_device, load_classifier, time_sync
-import paho.mqtt.publish as publish
+
 
 FILE = Path(__file__).absolute()
 sys.path.append(FILE.parents[0].as_posix())
@@ -190,9 +190,9 @@ def aigo_detect_test(weights='/home/aigo/detect/trafficlight/test4best.pt',  # m
             #print(f'{s}Done1. ({t2 - t1:.3f}s)')
 
             # Stream results
-            #if(view_img):
-            #    cv2.imshow('test', im0)
-            #    cv2.waitKey(1)  # 1 millisecond
+            if(view_img):
+                cv2.imshow('test', im0)
+                cv2.waitKey(1)  # 1 millisecond
 
     print(f'Finish: {time.time() - t0:.3f}s')
     return res
@@ -203,7 +203,6 @@ def tl_run():
     first_flag = 1
     curr_state = 1
     time.sleep(3)
-    tts_flag = False
     while(True):
         print(curr_state)
         print(buff)
@@ -224,9 +223,6 @@ def tl_run():
             if(curr_state==-1): # none
                 return -1
             elif(curr_state==1): # green ( -> red)
-                if(tts_flag==False):
-                    publish.single(topic="/detect/yestl",payload="1",hostname="163.180.117.43")
-                    tts_flag = True
                 try:
                     res = aigo_detect_test(source='/home/aigo/detect/image.jpg')
                     print(res)
@@ -240,9 +236,6 @@ def tl_run():
                 if(buff.count(1)<buff.count(0)):
                     curr_state=0
             elif(curr_state==0): # red ( -> green -> go)
-                if(tts_flag==False):
-                    publish.single(topic="/detect/yestl",payload="1",hostname="163.180.117.43")
-                    tts_flag = True
                 try:
                     res = aigo_detect_test(source='/home/aigo/detect/image.jpg')
                 except Exception as e:
