@@ -1,0 +1,20 @@
+{
+    "main_engine": {
+        "input_type": "stream",
+        "input_path": "./data/images/000002.jpg",
+        "device_number": 0,
+        "window_horizontal_size": 640,
+        "window_vertical_size": 480
+    },
+    
+    "ml_engine": {
+        "detection_model": {
+            "model_def": "car/config/yolov3-tiny.cfg",
+            "path": "car/weights/tiny1_1000.pth",
+            "img_size": 416
+        },
+        "distance_model": {
+            "path": "car/weights/distance_model.pth"
+        }
+    }
+}
